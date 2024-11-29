@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Runge Kutta</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    
+</head>
+<body style="background-color: cornsilk;">
+    
+    <div class="container mt-4">
+        <div>
+            <form action="" class="border p-4 rounded " > 
+                <h3 class="text-center">Método Runge Kutta</h3>
+                <div class="mb-3">
+                    <label for="y0" class="form-label">Valor inicial en y0</label>
+                    <input type="number" class="form-control" id="y0" placeholder="Ingresa el valor....">
+                </div>
+                <div class="mb-3">
+                    <label for="x0" class="form-label">Valor inicial en x0</label>
+                    <input type="number" class="form-control" id="x0" placeholder="Ingresa el valor....">
+                </div>
+                <div class="mb-3">
+                    <label for="h" class="form-label">Tamaño de pasos (h):</label>
+                    <input type="number" class="form-control" id="h" placeholder="Ingresa el número de pasos....">
+                </div>
+                <div class="mb-3">
+                    <label for="n" class="form-label">Número de iteraciones (n):</label>
+                    <input type="number" class="form-control" id="n" placeholder="Ingresa el número de iteraciones....">
+                </div>
+                <div class="mb-3">
+                    <label for="ecuacion" class="form-label">Ecuación diferencial:</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="ecuacion" placeholder="Ingresa la ecuación....">
+                    </div>
+                </div>
+                <div class="d-flex justify-content-end">
+                    <button class="btn btn-success mt-3">Calcular </button>
+                </div>
+            </form>
+            <!-- Resultados -->
+            <div id="resultado" class="result ps-4" >
+                <h4 id="tituloResul"  class="mt-2">Resultados: </h4>
+                <table id="resultTable" class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Iteración</th>
+                            <th>x</th>
+                            <th>y</th>
+                            <th>k1</th>
+                            <th>k2</th>
+                            <th>k3</th>
+                            <th>k4</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultBody">
+                        <!-- Los resultados serán agregados dinámicamente aquí -->
+                    </tbody>
+                </table>
+            </div>
+        </div>  
+    </div>
+</body>
+</html>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.11.0/math.min.js"></script>
+
+<script>
+    function rungeKutta() {
+    // Para btener los valores de los campos de entrada
+    let y0 = parseFloat(document.getElementById("y0").value);
+    let x0 = parseFloat(document.getElementById("x0").value);
+    let h = parseFloat(document.getElementById("h").value);
+    let n = parseInt(document.getElementById("n").value);
+    let ecuacion = document.getElementById("ecuacion").value;
+
+    if (isNaN(y0) || isNaN(x0) || isNaN(h) || isNaN(n) || !ecuacion.trim()) {
+        alert("Por favor, ingresa valores válidos.");
+        return;
+    }
+
+    // Crear la función a partir de la ecuación ingresada
+    function f(x, y) {
+        // Obtener la ecuación desde el formulario
+        let ecuacion = document.getElementById("ecuacion").value;
+    
+        try {
+            // Crear una expresión con math.js
+            const expr = math.parse(ecuacion);
+    
+            // Compilar la expresión para evaluarla con valores de x y y
+            const compiledExpr = expr.compile();
+    
+            // Evaluar la expresión con los valores de x y y
+            return compiledExpr.evaluate({ x: x, y: y });
+        } catch (error) {
+            alert("Error en la ecuación. Por favor revisa la sintaxis.");
+            throw error; // Detener ejecución en caso de error
+        }
+    }
+
+    // Método de Runge-Kutta
+    // Método de Runge-Kutta
+    let results = [];
+    let x = x0;
+    let y = y0;
+
+    // Para Iterar y calcular los valores
+    for (let i = 0; i < n; i++) {
+        // Cálculo de k1, k2, k3, k4
+        let k1 = h * f(x, y);
+        let k2 = h * f(x + h / 2, y + k1 / 2);
+        let k3 = h * f(x + h / 2, y + k2 / 2);
+        let k4 = h * f(x + h, y + k3);
+
+        // Para visualización directa de k1, k2, k3, k4
+        let k1Visual = f(x, y);
+        let k2Visual = f(x + h / 2, y + (k1Visual * h / 2));
+        let k3Visual = f(x + h / 2, y + (k2Visual * h / 2));
+        let k4Visual = f(x + h, y + k3Visual * h);
+
+        // Para actualizar los valores de x e y
+        x += h;
+        y += (k1 + 2 * k2 + 2 * k3 + k4) / 6;
+
+        // Guardar el resultado de cada iteración
+        results.push({
+            iteration: i + 1,
+            x: x.toFixed(2),
+            y: y.toFixed(4),
+            k1: k1Visual.toFixed(4),
+            k2: k2Visual.toFixed(4),
+            k3: k3Visual.toFixed(4),
+            k4: k4Visual.toFixed(4)
+        });
+    }
+
+    // Mostrar los resultados en un elemento HTML
+    let resultContainer = document.getElementById("resultado");
+    // Mostrar los resultados en la tabla
+    let resultBody = document.getElementById("resultBody");
+    resultBody.innerHTML = ""; // Limpiar los resultados previos
+
+    results.forEach(result => {
+        resultBody.innerHTML += `
+            <tr>
+                <td>${result.iteration}</td>
+                <td>${result.x}</td>
+                <td>${result.y}</td>
+                <td>${result.k1}</td>
+                <td>${result.k2}</td>
+                <td>${result.k3}</td>
+                <td>${result.k4}</td>
+            </tr>`;
+    });
+}
+
+// Asignar la función al botón de calcular
+document.querySelector("button").addEventListener("click", function (event) {
+    event.preventDefault(); // Evitar que el formulario se envíe
+    rungeKutta();
+});
+</script>
